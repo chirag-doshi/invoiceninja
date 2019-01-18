@@ -20,6 +20,17 @@ use Utils;
 
 /**
  * Class Invoice.
+ *
+ * @property string $tax_name1
+ * @property string $tax_rate1
+ * @property string $tax_name2
+ * @property string $tax_rate2
+ * @property string $private_notes
+ * @property \Carbon\Carbon|null $last_sent_date
+ * @property int $invoice_number
+ * @property \Carbon\Carbon|null $invoice_date
+ * @property string $amount
+ * @property string $balance
  */
 class Invoice extends EntityModel implements BalanceAffecting
 {

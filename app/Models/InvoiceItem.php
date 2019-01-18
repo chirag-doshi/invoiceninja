@@ -7,6 +7,16 @@ use Laracasts\Presenter\PresentableTrait;
 
 /**
  * Class InvoiceItem.
+ *
+ * @property string $tax_name1
+ * @property string $tax_rate1
+ * @property string $tax_name2
+ * @property string $tax_rate2
+ * @property string $cost
+ * @property int $qty
+ * @property string $notes
+ * @property int $product_key
+ * @property string $discount
  */
 class InvoiceItem extends EntityModel
 {

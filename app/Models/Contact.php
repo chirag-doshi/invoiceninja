@@ -13,6 +13,17 @@ use Illuminate\Notifications\Notifiable;
 
 /**
  * Class Contact.
+ *
+ * @property string $first_name
+ * @property string $last_name
+ * @property string $email
+ * @property string $phone
+ * @property string $private_notes
+ * @property \Carbon\Carbon|null $last_sent_date
+ * @property int $invoice_number
+ * @property \Carbon\Carbon|null $invoice_date
+ * @property string $amount
+ * @property string $balance
  */
 class Contact extends EntityModel implements AuthenticatableContract, CanResetPasswordContract
 {

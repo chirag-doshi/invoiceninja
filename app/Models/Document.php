@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * Class Document.
+ *
+ * @property int $invoice_id
+ * @property int $expense_id
+ * @property boolean $is_default
+ * @property string $base64
  */
 class Document extends EntityModel
 {
