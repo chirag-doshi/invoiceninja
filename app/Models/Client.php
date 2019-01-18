@@ -11,6 +11,41 @@ use Utils;
 
 /**
  * Class Client.
+ *
+ * @property string $name
+ * @property int $id_number
+ * @property int $vat_number
+ * @property string $work_phone
+ * @property string $custom_value1
+ * @property string $custom_value2
+ * @property string $address1
+ * @property string $address2
+ * @property string $city
+ * @property string $state
+ * @property string $postal_code
+ * @property int $country_id
+ * @property string $private_notes
+ * @property int $size_id
+ * @property int $industry_id
+ * @property int $currency_id
+ * @property int $language_id
+ * @property string $payment_terms
+ * @property string $website
+ * @property int $invoice_number_counter
+ * @property int $quote_number_counter
+ * @property string $public_notes
+ * @property string $task_rate
+ * @property string $shipping_address1
+ * @property string $shipping_address2
+ * @property string $shipping_city
+ * @property string $shipping_state
+ * @property string $shipping_postal_code
+ * @property int $shipping_country_id
+ * @property string $show_tasks_in_portal
+ * @property string $send_reminders
+ * @property string $custom_messages
+ * @property string $work_email
+ * @property string $balance
  */
 class Client extends EntityModel
 {
