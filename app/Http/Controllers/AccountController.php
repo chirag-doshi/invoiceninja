@@ -155,71 +155,34 @@ class AccountController extends BaseController
      */
     public function changePlan()
     {
-        $user = Auth::user();
-        $account = $user->account;
-        $company = $account->company;
+        $company = Auth::user()->account->company;
 
         $plan = Input::get('plan');
         $term = Input::get('plan_term');
-        $numUsers = Input::get('num_users');
 
-        if ($plan != PLAN_ENTERPRISE) {
-            $numUsers = 1;
-        }
+        $numUsers = $plan != PLAN_ENTERPRISE ? 1 : Input::get('num_users');
 
-        $planDetails = $account->getPlanDetails(false, false);
+        $planDetails = Auth::user()->account->getPlanDetails(false, false);
 
-        $newPlan = [
-            'plan' => $plan,
-            'term' => $term,
-            'num_users' => $numUsers,
-        ];
-        $newPlan['price'] = Utils::getPlanPrice($newPlan);
+        $newPlan = $this->buildNewPlanProperties($plan, $term, $numUsers);
         $credit = 0;
 
         if ($plan == PLAN_FREE && $company->processRefund(Auth::user())) {
             Session::flash('warning', trans('texts.plan_refunded'));
         }
 
-        if ($company->payment && ! empty($planDetails['paid']) && $plan != PLAN_FREE) {
-            $time_used = $planDetails['paid']->diff(date_create());
-            $days_used = $time_used->days;
-
-            if ($time_used->invert) {
-                // They paid in advance
-                $days_used *= -1;
-            }
-
-            $days_total = $planDetails['paid']->diff($planDetails['expires'])->days;
-            $percent_used = $days_used / $days_total;
-            $credit = round(floatval($company->payment->amount) * (1 - $percent_used), 2);
-        }
+        $credit = $this->planDetermineCredit($company, $planDetails, $plan);
 
         if ($newPlan['price'] > $credit) {
             $invitation = $this->accountRepo->enablePlan($newPlan, $credit);
             return Redirect::to('view/' . $invitation->invitation_key);
-        } else {
-            if ($plan == PLAN_FREE) {
-                $company->discount = 0;
-
-                $ninjaClient = $this->accountRepo->getNinjaClient($account);
-                $ninjaClient->send_reminders = false;
-                $ninjaClient->save();
-            } else {
-                $company->plan_term = $term;
-                $company->plan_price = $newPlan['price'];
-                $company->num_users = $numUsers;
-                $company->plan_expires = date_create()->modify($term == PLAN_TERM_MONTHLY ? '+1 month' : '+1 year')->format('Y-m-d');
-            }
-
-            $company->trial_plan = null;
-            $company->plan = $plan;
-            $company->save();
-
-            Session::flash('message', trans('texts.updated_plan'));
-
-            return Redirect::to('settings/account_management');
         }
+
+        $this->saveCompanyPlan($plan, $company, $term, $newPlan, $numUsers);
+
+        Session::flash('message', trans('texts.updated_plan'));
+
+        return Redirect::to('settings/account_management');
     }
 
     /**
@@ -1581,5 +1544,73 @@ class AccountController extends BaseController
         ]);
 
         return Response::view($view, $data);
+    }
+
+    /**
+     * @param $plan
+     * @param $term
+     * @param int $numUsers
+     * @return array
+     */
+    public function buildNewPlanProperties($plan, $term, int $numUsers): array
+    {
+        $newPlan = [
+            'plan' => $plan,
+            'term' => $term,
+            'num_users' => $numUsers
+        ];
+        $newPlan['price'] = Utils::getPlanPrice($newPlan);
+        return $newPlan;
+    }
+
+    /**
+     * @param $company
+     * @param $planDetails
+     * @param $plan
+     * @return float
+     */
+    public function planDetermineCredit($company, $planDetails, $plan): float
+    {
+        if ($company->payment && !empty($planDetails['paid']) && $plan != PLAN_FREE) {
+            $time_used = $planDetails['paid']->diff(date_create());
+            $days_used = $time_used->days;
+
+            if ($time_used->invert) {
+                // They paid in advance
+                $days_used *= -1;
+            }
+
+            $days_total = $planDetails['paid']->diff($planDetails['expires'])->days;
+            $percent_used = $days_used / $days_total;
+            $credit = round(floatval($company->payment->amount) * (1 - $percent_used), 2);
+        }
+        return $credit;
+    }
+
+    /**
+     * @param $plan
+     * @param $company
+     * @param $term
+     * @param array $newPlan
+     * @param int $numUsers
+     */
+    public function saveCompanyPlan($plan, $company, $term, array $newPlan, int $numUsers): void
+    {
+        if ($plan == PLAN_FREE) {
+            $company->discount = 0;
+
+            $ninjaClient = $this->accountRepo->getNinjaClient(Auth::user()->account);
+            $ninjaClient->send_reminders = false;
+            $ninjaClient->save();
+        } else {
+            $company->plan_term = $term;
+            $company->plan_price = $newPlan['price'];
+            $company->num_users = $numUsers;
+            $company->plan_expires = date_create()->modify($term == PLAN_TERM_MONTHLY ? '+1 month' : '+1 year')->format('Y-m-d');
+        }
+
+        $company->trial_plan = null;
+        $company->plan = $plan;
+        $company->save();
     }
 }
